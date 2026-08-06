@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Grifo</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:     #1a1a2e;
+  --bg:      #f0f4f8;
+  --card:    #ffffff;
+  --diesel:  #2563a8;
+  --regular: #16a34a;
+  --premium: #b45309;
+  --ok:      #16a34a;
+  --fail:    #dc2626;
+  --accent:  #2563a8;
+  --gray:    #6b7280;
+  --border:  #e5e7eb;
+  --mono:    'Courier New', monospace;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* Header */
+.header {
+  background: var(--ink);
+  color: #fff;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header h1 { font-size: 15px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.header-sub { font-size: 11px; opacity: .5; margin-top: 1px; }
+
+/* Date nav */
+.date-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.1);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+.date-nav button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  opacity: .7;
+}
+.date-nav button:hover { opacity: 1; }
+.date-nav input[type="date"] {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  width: 120px;
+}
+.date-nav input::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .6; }
+
+/* Container */
+.container { max-width: 600px; margin: 0 auto; padding: 16px; }
+
+/* Loading / empty */
+.state-msg {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--gray);
+  font-size: 15px;
+}
+.state-msg .icon { font-size: 48px; margin-bottom: 12px; }
+
+/* Status banner */
+.status-banner {
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.status-banner.ok   { background: #dcfce7; border: 1.5px solid #86efac; }
+.status-banner.fail { background: #fee2e2; border: 1.5px solid #fca5a5; }
+.status-icon { font-size: 32px; flex-shrink: 0; }
+.status-text h2 { font-size: 16px; font-weight: 700; }
+.status-text p  { font-size: 13px; margin-top: 3px; opacity: .75; }
+.status-banner.ok   .status-text h2 { color: #15803d; }
+.status-banner.fail .status-text h2 { color: #dc2626; }
+
+/* Card */
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gray);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-body { padding: 16px; }
+
+/* Big number */
+.big-number {
+  text-align: center;
+  padding: 20px 16px 8px;
+}
+.big-number .label { font-size: 12px; color: var(--gray); margin-bottom: 4px; }
+.big-number .value {
+  font-size: 38px;
+  font-weight: 800;
+  font-family: var(--mono);
+  color: var(--ink);
+  letter-spacing: -.02em;
+}
+
+/* Combustible bars */
+.fuel-bars { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
+.fuel-row { display: flex; align-items: center; gap: 10px; }
+.fuel-label-text {
+  font-size: 11px;
+  font-weight: 700;
+  width: 58px;
+  flex-shrink: 0;
+  letter-spacing: .04em;
+}
+.fuel-label-text.diesel  { color: var(--diesel); }
+.fuel-label-text.regular { color: var(--regular); }
+.fuel-label-text.premium { color: var(--premium); }
+.fuel-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fuel-bar { height: 100%; border-radius: 4px; transition: width .6s ease; }
+.fuel-bar.diesel  { background: var(--diesel); }
+.fuel-bar.regular { background: var(--regular); }
+.fuel-bar.premium { background: var(--premium); }
+.fuel-amount {
+  font-size: 12px;
+  font-family: var(--mono);
+  font-weight: 600;
+  width: 70px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Turnos */
+.turnos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.turno-card {
+  border-radius: 10px;
+  padding: 14px;
+  border: 1.5px solid var(--border);
+}
+.turno-card.ok   { border-color: #86efac; background: #f0fdf4; }
+.turno-card.fail { border-color: #fca5a5; background: #fff5f5; }
+.turno-card.empty { background: #f9fafb; }
+.turno-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.turno-stat { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+.turno-stat .lbl { color: var(--gray); }
+.turno-stat .val { font-family: var(--mono); font-weight: 600; }
+.turno-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.turno-badge.ok   { background: #dcfce7; color: #15803d; }
+.turno-badge.fail { background: #fee2e2; color: #dc2626; }
+
+/* Medios de pago */
+.pagos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pago-item {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border);
+}
+.pago-item .pago-label { font-size: 12px; color: var(--gray); font-weight: 600; }
+.pago-item .pago-val   { font-size: 14px; font-family: var(--mono); font-weight: 700; }
+
+/* Creditos */
+.credito-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.credito-item:last-child { border-bottom: none; }
+.credito-nombre { color: var(--ink); }
+.credito-monto  { font-family: var(--mono); font-weight: 700; color: #7c3aed; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  font-size: 11px;
+  color: #bbb;
+  margin-top: 24px;
+}
+
+/* Dot */
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.dot.diesel  { background: var(--diesel); }
+.dot.regular { background: var(--regular); }
+.dot.premium { background: var(--premium); }
+.dot.cash    { background: var(--ink); }
+.dot.credit  { background: #7c3aed; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span style="font-size:22px;">⛽</span>
+    <div>
+      <div class="header h1" style="font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;">Reporte Diario</div>
+      <div class="header-sub">Grifo — Resumen para dirección</div>
+    </div>
+  </div>
+  <div class="date-nav">
+    <button onclick="changeDate(-1)">‹</button>
+    <input type="date" id="fecha-input" onchange="loadData()">
+    <button onclick="changeDate(1)">›</button>
+  </div>
+</div>
+
+<div class="container" id="main">
+  <div class="state-msg">
+    <div class="icon">⏳</div>
+    <div>Cargando datos...</div>
+  </div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycby11wWz4uszEb_QiCo1KlJjj_B_EA5ikPDlS8q62k8arH4Ipw-uB8wW6Xpd2Bo3BUmU7A/exec";
+
+function fmt(n) {
+  if (!n) return 'S/ 0.00';
+  return 'S/ ' + parseFloat(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function fmtGal(n) {
+  if (!n) return '0.000';
+  return parseFloat(n).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function pct(part, total) {
+  if (!total) return 0;
+  return Math.round((part / total) * 100);
+}
+
+// Init date to today (Peru UTC-5)
+function getToday() {
+  const now  = new Date();
+  const peru = new Date(now.getTime() - 5 * 60 * 60 * 1000);
+  return peru.toISOString().split('T')[0];
+}
+
+function changeDate(delta) {
+  const inp = document.getElementById('fecha-input');
+  const d   = new Date(inp.value + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  inp.value = d.toISOString().split('T')[0];
+  loadData();
+}
+
+async function loadData() {
+  const fecha = document.getElementById('fecha-input').value;
+  document.getElementById('main').innerHTML = `
+    <div class="state-msg">
+      <div class="icon">⏳</div>
+      <div>Cargando...</div>
+    </div>`;
+
+  try {
+    const res  = await fetch(`${API_URL}?fecha=${fecha}`);
+    const data = await res.json();
+    render(data);
+  } catch(err) {
+    document.getElementById('main').innerHTML = `
+      <div class="state-msg">
+        <div class="icon">❌</div>
+        <div>Error al cargar datos.<br>Verifica tu conexión.</div>
+      </div>`;
+  }
+}
+
+function render(data) {
+  if (!data.tieneDatos) {
+    document.getElementById('main').innerHTML = `
+      <div class="state-msg">
+        <div class="icon">📭</div>
+        <div>No hay reportes para esta fecha.</div>
+      </div>`;
+    return;
+  }
+
+  const t   = data.total;
+  const ok  = data.todosCuadran;
+  const dia   = data.turnos.find(x => x.turno === 'Día');
+  const noche = data.turnos.find(x => x.turno === 'Noche');
+
+  // Fuel bar widths
+  const maxVenta = Math.max(t.ventaDiesel, t.ventaRegular, t.ventaPremium) || 1;
+  const dPct = pct(t.ventaDiesel,  maxVenta);
+  const rPct = pct(t.ventaRegular, maxVenta);
+  const pPct = pct(t.ventaPremium, maxVenta);
+
+  // Parse creditos
+  const creditoItems = parseCreditosTexto(data.creditosTexto);
+
+  let html = '';
+
+  // ── Status banner ──────────────────────────────────────────────
+  html += `
+  <div class="status-banner ${ok ? 'ok' : 'fail'}">
+    <div class="status-icon">${ok ? '✅' : '⚠️'}</div>
+    <div class="status-text">
+      <h2>${ok ? 'Cuadre correcto' : 'Hay diferencias en el cuadre'}</h2>
+      <p>${ok ? 'Todos los turnos cuadran correctamente.' : 'Revisar detalle por turno.'}</p>
+    </div>
+  </div>`;
+
+  // ── Venta total ────────────────────────────────────────────────
+  html += `
+  <div class="card">
+    <div class="big-number">
+      <div class="label">VENTA TOTAL DEL DÍA</div>
+      <div class="value">${fmt(t.ventaTotal)}</div>
+    </div>
+    <div class="card-body">
+      <div class="fuel-bars">
+        <div class="fuel-row">
+          <span class="fuel-label-text diesel">DIESEL</span>
+          <div class="fuel-bar-wrap"><div class="fuel-bar diesel" style="width:${dPct}%"></div></div>
+          <span class="fuel-amount">${fmt(t.ventaDiesel)}</span>
+        </div>
+        <div class="fuel-row">
+          <span class="fuel-label-text regular">REGULAR</span>
+          <div class="fuel-bar-wrap"><div class="fuel-bar regular" style="width:${rPct}%"></div></div>
+          <span class="fuel-amount">${fmt(t.ventaRegular)}</span>
+        </div>
+        <div class="fuel-row">
+          <span class="fuel-label-text premium">PREMIUM</span>
+          <div class="fuel-bar-wrap"><div class="fuel-bar premium" style="width:${pPct}%"></div></div>
+          <span class="fuel-amount">${fmt(t.ventaPremium)}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  // ── Por turno ──────────────────────────────────────────────────
+  html += `
+  <div class="card">
+    <div class="card-header"><span class="dot cash"></span> Detalle por turno</div>
+    <div class="card-body">
+      <div class="turnos-grid">
+        ${renderTurno(dia,   '☀️ Día')}
+        ${renderTurno(noche, '🌙 Noche')}
+      </div>
+    </div>
+  </div>`;
+
+  // ── Medios de pago ─────────────────────────────────────────────
+  html += `
+  <div class="card">
+    <div class="card-header"><span class="dot cash"></span> Medios de pago del día</div>
+    <div class="card-body">
+      <div class="pagos-grid">
+        ${renderPago('Efectivo', t.efectivo)}
+        ${renderPago('Visa / Tarjeta', t.visa)}
+        ${renderPago('Depósito', t.deposito)}
+        ${renderPago('Izipay QR', t.izipay)}
+        ${renderPago('Yape BCP', t.yape)}
+        ${renderPago('Créditos', t.creditos)}
+      </div>
+      ${t.almuerzo || t.gastos ? `
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:16px;">
+        ${t.almuerzo ? `<div style="font-size:12px;color:var(--gray);">Almuerzo: <strong>${fmt(t.almuerzo)}</strong></div>` : ''}
+        ${t.gastos   ? `<div style="font-size:12px;color:var(--gray);">Gastos extra: <strong>${fmt(t.gastos)}</strong></div>` : ''}
+      </div>` : ''}
+    </div>
+  </div>`;
+
+  // ── Créditos ───────────────────────────────────────────────────
+  if (creditoItems.length > 0) {
+    html += `
+  <div class="card">
+    <div class="card-header"><span class="dot credit"></span> Créditos del día</div>
+    <div class="card-body">
+      ${creditoItems.map(c => `
+        <div class="credito-item">
+          <span class="credito-nombre">${c.nombre}</span>
+          <span class="credito-monto">${c.monto ? fmt(c.monto) : '—'}</span>
+        </div>`).join('')}
+    </div>
+  </div>`;
+  }
+
+  html += `<div class="footer">Actualizado automáticamente • Grifo</div>`;
+
+  document.getElementById('main').innerHTML = html;
+}
+
+function renderTurno(t, label) {
+  if (!t) return `
+    <div class="turno-card empty">
+      <div class="turno-title">${label}</div>
+      <div style="font-size:12px;color:var(--gray);">Sin reporte</div>
+    </div>`;
+
+  const cuadra = Math.abs(t.diferencia || 0) < 1;
+  return `
+    <div class="turno-card ${cuadra ? 'ok' : 'fail'}">
+      <div class="turno-title">${label}</div>
+      <div class="turno-stat">
+        <span class="lbl">Venta</span>
+        <span class="val">${fmt(t.ventaTotal)}</span>
+      </div>
+      <div class="turno-stat">
+        <span class="lbl">Diesel</span>
+        <span class="val">${fmtGal(t.galDieselReal)} gal</span>
+      </div>
+      <div class="turno-stat">
+        <span class="lbl">Regular</span>
+        <span class="val">${fmtGal(t.galRegularReal)} gal</span>
+      </div>
+      <div class="turno-stat">
+        <span class="lbl">Premium</span>
+        <span class="val">${fmtGal(t.galPremiumReal)} gal</span>
+      </div>
+      <div class="turno-stat">
+        <span class="lbl">Cobrado</span>
+        <span class="val">${fmt(t.totalCobrado)}</span>
+      </div>
+      <span class="turno-badge ${cuadra ? 'ok' : 'fail'}">
+        ${cuadra ? '✅ Cuadra' : '❌ Dif. ' + fmt(Math.abs(t.diferencia))}
+      </span>
+    </div>`;
+}
+
+function renderPago(label, monto) {
+  return `
+    <div class="pago-item">
+      <span class="pago-label">${label}</span>
+      <span class="pago-val">${fmt(monto)}</span>
+    </div>`;
+}
+
+function parseCreditosTexto(texto) {
+  if (!texto) return [];
+  return texto.split('|').map(s => s.trim()).filter(Boolean).map(s => {
+    // Try to extract monto from format "Nombre: S/XXX" or "Nombre S/XXX"
+    const match = s.match(/S\/\s*([\d,\.]+)/i);
+    const monto = match ? parseFloat(match[1].replace(',', '')) : null;
+    const nombre = s.replace(/S\/\s*[\d,\.]+/i, '').replace(/[-:]/g, '').trim();
+    return { nombre, monto };
+  });
+}
+
+// Init
+document.getElementById('fecha-input').value = getToday();
+loadData();
+</script>
+</body>
+</html>
