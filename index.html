@@ -179,6 +179,11 @@ function loadData() {
   document.body.appendChild(script);
 }
 
+function toTitleCase(str) {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function render(data, fecha) {
   if (!data.tieneDatos) {
     document.getElementById('main').innerHTML = '<div class="state-msg"><div class="icon">&#128233;</div><div>Sin reportes para esta fecha.</div></div>';
@@ -294,48 +299,55 @@ function render(data, fecha) {
 
   // Creditos detalle
   if (data.creditosTexto || t.creditos) {
-    const items = data.creditosTexto ? data.creditosTexto.split('|').map(s=>s.trim()).filter(Boolean) : [];
-    html += `
-  <div class="card">
-    <div class="card-header">Cr&eacute;ditos del d&iacute;a &mdash; Total: ${fmt(t.creditos)}</div>
-    <div class="card-body">
-      ${items.length > 0
-        ? items.map(item => {
-            const parts = item.split(' S/');
-            const nombre = parts[0].trim();
-            const monto  = parts[1] ? 'S/ ' + parts[1].trim() : '';
-            return `<div style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
-              <span style="color:var(--ink);">${nombre}</span>
-              <span style="font-family:var(--mono);font-weight:700;color:#7c3aed;">${monto}</span>
-            </div>`;
-          }).join('')
-        : '<div style="font-size:12px;color:var(--gray);">Sin detalle registrado</div>'
-      }
-    </div>
-  </div>`;
+    const items = data.creditosTexto ? data.creditosTexto.split('|').map(function(s){return s.trim();}).filter(Boolean) : [];
+    var creditosHtml = '<div class="card"><div class="card-header">Cr&eacute;ditos del d&iacute;a &mdash; Total: ' + fmt(t.creditos) + '</div><div class="card-body">';
+    if (items.length > 0) {
+      items.forEach(function(item) {
+        var montoMatch  = item.match(/S\/([\d.]+)/);
+        var galMatch    = item.match(/([\d.]+)gal/);
+        var combustMatch = item.match(/-(\s*)(Diesel|Regular|Premium)/i);
+        var monto    = montoMatch  ? 'S/ ' + parseFloat(montoMatch[1]).toFixed(2) : '';
+        var galones  = galMatch    ? galMatch[1] + ' gal' : '';
+        var combust  = combustMatch ? combustMatch[2] : '';
+        var nombre = item
+          .replace(/\s*-\s*(Diesel|Regular|Premium)[^|]*/i, '')
+          .replace(/S\/[\d.]+/, '')
+          .replace(/[\d.]+gal/, '')
+          .replace(/-$/, '')
+          .trim();
+        nombre = toTitleCase(nombre);
+        var detalleRight = [combust, galones, monto].filter(Boolean).join(' ');
+        creditosHtml += '<div style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:12px;">';
+        creditosHtml += '<span style="color:var(--ink);">' + nombre + '</span>';
+        creditosHtml += '<span style="font-family:var(--mono);font-weight:700;color:#7c3aed;white-space:nowrap;">' + detalleRight + '</span>';
+        creditosHtml += '</div>';
+      });
+    } else {
+      creditosHtml += '<div style="font-size:12px;color:var(--gray);">Sin detalle registrado</div>';
+    }
+    creditosHtml += '</div></div>';
+    html += creditosHtml;
   }
 
   // Gastos detalle
   if (data.gastosTexto || t.gastos) {
-    const gitems = data.gastosTexto ? data.gastosTexto.split('|').map(s=>s.trim()).filter(Boolean) : [];
-    html += `
-  <div class="card">
-    <div class="card-header">Gastos extra del d&iacute;a &mdash; Total: ${fmt(t.gastos)}</div>
-    <div class="card-body">
-      ${gitems.length > 0
-        ? gitems.map(item => {
-            const parts = item.split(' S/');
-            const nombre = parts[0].trim();
-            const monto  = parts[1] ? 'S/ ' + parts[1].trim() : '';
-            return `<div style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
-              <span style="color:var(--ink);">${nombre}</span>
-              <span style="font-family:var(--mono);font-weight:700;color:#dc2626;">${monto}</span>
-            </div>`;
-          }).join('')
-        : '<div style="font-size:12px;color:var(--gray);">Sin detalle registrado</div>'
-      }
-    </div>
-  </div>`;
+    const gitems = data.gastosTexto ? data.gastosTexto.split('|').map(function(s){return s.trim();}).filter(Boolean) : [];
+    var gastosHtml = '<div class="card"><div class="card-header">Gastos extra del d&iacute;a &mdash; Total: ' + fmt(t.gastos) + '</div><div class="card-body">';
+    if (gitems.length > 0) {
+      gitems.forEach(function(item) {
+        var parts  = item.split(' S/');
+        var nombre = toTitleCase(parts[0].trim());
+        var monto  = parts[1] ? 'S/ ' + parseFloat(parts[1]).toFixed(2) : '';
+        gastosHtml += '<div style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;font-size:13px;">';
+        gastosHtml += '<span style="color:var(--ink);">' + nombre + '</span>';
+        gastosHtml += '<span style="font-family:var(--mono);font-weight:700;color:#dc2626;">' + monto + '</span>';
+        gastosHtml += '</div>';
+      });
+    } else {
+      gastosHtml += '<div style="font-size:12px;color:var(--gray);">Sin detalle registrado</div>';
+    }
+    gastosHtml += '</div></div>';
+    html += gastosHtml;
   }
 
   html += `<div class="footer">Actualizado autom&aacute;ticamente &bull; Grifo</div>`;
