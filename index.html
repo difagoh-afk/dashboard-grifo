@@ -110,6 +110,36 @@ body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:
 
 /* Footer */
 .footer { text-align:center; font-size:11px; color:#ccc; margin-top:20px; }
+
+/* ── Tank visuals ── */
+.tanks-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.tank-item { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.tank-label { font-size:11px; font-weight:700; letter-spacing:.06em; text-align:center; }
+.tank-label.diesel  { color:var(--diesel); }
+.tank-label.regular { color:var(--regular); }
+.tank-label.premium { color:var(--premium); }
+.tank-wrap { position:relative; width:70px; height:120px; }
+.tank-body {
+  width:70px; height:120px; border-radius:8px;
+  border:2px solid #cbd5e1; background:#f1f5f9;
+  overflow:hidden; position:relative;
+}
+.tank-fill {
+  position:absolute; bottom:0; left:0; right:0;
+  border-radius:0 0 6px 6px;
+  transition:height .8s ease;
+}
+.tank-fill.diesel  { background:linear-gradient(180deg,#60a5fa,#2563a8); }
+.tank-fill.regular { background:linear-gradient(180deg,#4ade80,#16a34a); }
+.tank-fill.premium { background:linear-gradient(180deg,#fbbf24,#b45309); }
+.tank-fill.low     { background:linear-gradient(180deg,#fca5a5,#dc2626) !important; }
+.tank-pct {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-size:13px; font-weight:800; color:var(--ink); text-shadow:0 1px 2px rgba(255,255,255,.8);
+}
+.tank-gal { font-size:12px; font-family:var(--mono); font-weight:600; text-align:center; color:var(--gray); }
+.tank-cap { font-size:10px; color:#bbb; text-align:center; }
+.tank-alert { font-size:10px; color:var(--fail); font-weight:700; text-align:center; }
 </style>
 </head>
 <body>
@@ -134,7 +164,7 @@ body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbz1ZOFgZimqfLavwZ12WUdBZYBEVzGfiYsr19BXITjxa-bAQW06jtxxBnVh2FWa4SC3/exec";
+const API = "https://script.google.com/macros/s/AKfycbw7WAEG2c4mJrEKRoJoc6V8ykRDb5Sb6MpXK3QQzGz85zDowxorarv1pczWzLRicKHPqw/exec";
 
 function getToday() {
   const now  = new Date();
@@ -179,6 +209,41 @@ function loadData() {
   document.body.appendChild(script);
 }
 
+function renderTanks(varillas) {
+  if (!varillas) return '';
+  var tanks = [
+    {key:'diesel1', label:'DIESEL 1', tipo:'diesel'},
+    {key:'regular', label:'REGULAR',  tipo:'regular'},
+    {key:'premium', label:'PREMIUM',  tipo:'premium'},
+    {key:'diesel2', label:'DIESEL 2', tipo:'diesel'},
+  ];
+  var html = '<div class="card"><div class="card-header">Inventario de tanques (varilla)</div><div class="card-body"><div class="tanks-grid">';
+  tanks.forEach(function(t) {
+    var tank = varillas[t.key];
+    if (!tank || tank.galones === null) {
+      html += '<div class="tank-item"><div class="tank-label ' + t.tipo + '">' + t.label + '</div>';
+      html += '<div class="tank-wrap"><div class="tank-body"></div></div>';
+      html += '<div class="tank-cap">Sin lectura</div></div>';
+      return;
+    }
+    var pct = tank.pct || 0;
+    var isLow = pct < 20;
+    var fillClass = 'tank-fill ' + t.tipo + (isLow ? ' low' : '');
+    html += '<div class="tank-item">';
+    html += '<div class="tank-label ' + t.tipo + '">' + t.label + '</div>';
+    html += '<div class="tank-wrap"><div class="tank-body">';
+    html += '<div class="' + fillClass + '" style="height:' + pct + '%"></div>';
+    html += '<div class="tank-pct">' + pct + '%</div>';
+    html += '</div></div>';
+    html += '<div class="tank-gal">' + tank.galones.toFixed(0) + ' gal</div>';
+    html += '<div class="tank-cap">de ' + tank.cap.toFixed(0) + ' gal</div>';
+    if (isLow) html += '<div class="tank-alert">⚠️ Nivel bajo</div>';
+    html += '</div>';
+  });
+  html += '</div></div></div>';
+  return html;
+}
+
 function toTitleCase(str) {
   if (!str) return '';
   return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
@@ -211,6 +276,11 @@ function render(data, fecha) {
     html += `<div class="status-banner ok"><div class="status-icon">&#10003;</div><div class="status-text"><h2>Cuadre correcto</h2><p>Todos los turnos del ${fechaLabel} cuadran correctamente.</p></div></div>`;
   } else {
     html += `<div class="status-banner fail"><div class="status-icon">&#9888;</div><div class="status-text"><h2>Hay diferencias en el cuadre</h2><p>${allDiff.length} turno(s) con diferencia &mdash; revisar detalle abajo.</p></div></div>`;
+  }
+
+  // Tanks (if available)
+  if (data.varillas) {
+    html += renderTanks(data.varillas);
   }
 
   // Venta total
