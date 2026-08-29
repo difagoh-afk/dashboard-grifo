@@ -278,11 +278,6 @@ function render(data, fecha) {
     html += `<div class="status-banner fail"><div class="status-icon">&#9888;</div><div class="status-text"><h2>Hay diferencias en el cuadre</h2><p>${allDiff.length} turno(s) con diferencia &mdash; revisar detalle abajo.</p></div></div>`;
   }
 
-  // Tanks (if available)
-  if (data.varillas) {
-    html += renderTanks(data.varillas);
-  }
-
   // Venta total
   html += `
   <div class="card">
@@ -418,6 +413,11 @@ function render(data, fecha) {
     }
     gastosHtml += '</div></div>';
     html += gastosHtml;
+  }
+
+  // Tanks at the end
+  if (data.varillas) {
+    html += renderTanks(data.varillas);
   }
 
   html += `<div class="footer">Actualizado autom&aacute;ticamente &bull; Grifo</div>`;
