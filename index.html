@@ -134,7 +134,7 @@ body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxiT9rmHXfkwRQ5ksiImZBm6u5vWhZCxx75WTFHw-eA-oiCorzzDb273wTnJEy_kWaQtQ/exec";
+const API = "https://script.google.com/macros/s/AKfycbzFxrG0z-QUttF49rz6Kbcmvq3r_9ivyd1v5YdogAbij8c-eJLc86QYxpxjF757syQBTQ/exec";
 
 function getToday() {
   const now  = new Date();
@@ -283,13 +283,47 @@ function render(data, fecha) {
   </div>`;
 
   // Creditos detalle
-  if (data.creditosTexto) {
-    const items = data.creditosTexto.split('|').map(s=>s.trim()).filter(Boolean);
+  if (data.creditosTexto || t.creditos) {
+    const items = data.creditosTexto ? data.creditosTexto.split('|').map(s=>s.trim()).filter(Boolean) : [];
     html += `
   <div class="card">
-    <div class="card-header">Cr&eacute;ditos del d&iacute;a</div>
+    <div class="card-header">Cr&eacute;ditos del d&iacute;a &mdash; Total: ${fmt(t.creditos)}</div>
     <div class="card-body">
-      ${items.map(item => `<div style="padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">${item}</div>`).join('')}
+      ${items.length > 0
+        ? items.map(item => {
+            const parts = item.split(' S/');
+            const nombre = parts[0].trim();
+            const monto  = parts[1] ? 'S/ ' + parts[1].trim() : '';
+            return `<div style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+              <span style="color:var(--ink);">${nombre}</span>
+              <span style="font-family:var(--mono);font-weight:700;color:#7c3aed;">${monto}</span>
+            </div>`;
+          }).join('')
+        : '<div style="font-size:12px;color:var(--gray);">Sin detalle registrado</div>'
+      }
+    </div>
+  </div>`;
+  }
+
+  // Gastos detalle
+  if (data.gastosTexto || t.gastos) {
+    const gitems = data.gastosTexto ? data.gastosTexto.split('|').map(s=>s.trim()).filter(Boolean) : [];
+    html += `
+  <div class="card">
+    <div class="card-header">Gastos extra del d&iacute;a &mdash; Total: ${fmt(t.gastos)}</div>
+    <div class="card-body">
+      ${gitems.length > 0
+        ? gitems.map(item => {
+            const parts = item.split(' S/');
+            const nombre = parts[0].trim();
+            const monto  = parts[1] ? 'S/ ' + parts[1].trim() : '';
+            return `<div style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+              <span style="color:var(--ink);">${nombre}</span>
+              <span style="font-family:var(--mono);font-weight:700;color:#dc2626;">${monto}</span>
+            </div>`;
+          }).join('')
+        : '<div style="font-size:12px;color:var(--gray);">Sin detalle registrado</div>'
+      }
     </div>
   </div>`;
   }
