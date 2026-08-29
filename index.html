@@ -134,7 +134,7 @@ body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbzFxrG0z-QUttF49rz6Kbcmvq3r_9ivyd1v5YdogAbij8c-eJLc86QYxpxjF757syQBTQ/exec";
+const API = "https://script.google.com/macros/s/AKfycbztY675tHTHXEfROn1LISZ9PWXU6X2l0_6OsQ2hCHj4gNN_dcQwsVdeY5UH7w2FsycvGQ/exec";
 
 function getToday() {
   const now  = new Date();
@@ -157,16 +157,26 @@ function fmt(n) {
 function fmtGal(n) { return (parseFloat(n)||0).toFixed(3); }
 function pct(a, b) { return b ? Math.round((a/b)*100) : 0; }
 
-async function loadData() {
+function loadData() {
   const fecha = document.getElementById('fecha-input').value;
   document.getElementById('main').innerHTML = '<div class="state-msg"><div class="icon">&#9203;</div><div>Cargando...</div></div>';
-  try {
-    const res  = await fetch(API + '?fecha=' + fecha);
-    const data = await res.json();
+
+  // Remove previous JSONP script if exists
+  const old = document.getElementById('jsonp-script');
+  if (old) old.remove();
+
+  // JSONP callback
+  window._dashboardCallback = function(data) {
     render(data, fecha);
-  } catch(e) {
+  };
+
+  const script = document.createElement('script');
+  script.id = 'jsonp-script';
+  script.src = API + '?fecha=' + fecha + '&callback=_dashboardCallback';
+  script.onerror = () => {
     document.getElementById('main').innerHTML = '<div class="state-msg"><div class="icon">&#10060;</div><div>Error al cargar datos.</div></div>';
-  }
+  };
+  document.body.appendChild(script);
 }
 
 function render(data, fecha) {
