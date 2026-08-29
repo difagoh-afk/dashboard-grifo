@@ -212,18 +212,19 @@ function loadData() {
 function renderTanks(varillas) {
   if (!varillas) return '';
   var tanks = [
-    {key:'diesel1', label:'DIESEL 1', tipo:'diesel'},
+    {key:'diesel1', label:'DIESEL', tipo:'diesel'},
     {key:'regular', label:'REGULAR',  tipo:'regular'},
     {key:'premium', label:'PREMIUM',  tipo:'premium'},
-    {key:'diesel2', label:'DIESEL 2', tipo:'diesel'},
+    {key:'diesel2', label:'DIESEL', tipo:'diesel'},
   ];
   var html = '<div class="card"><div class="card-header">Inventario de tanques (varilla)</div><div class="card-body"><div class="tanks-grid">';
   tanks.forEach(function(t) {
     var tank = varillas[t.key];
     if (!tank || tank.galones === null) {
       html += '<div class="tank-item"><div class="tank-label ' + t.tipo + '">' + t.label + '</div>';
+      html += '<div class="tank-cap">—</div>';
       html += '<div class="tank-wrap"><div class="tank-body"></div></div>';
-      html += '<div class="tank-cap">Sin lectura</div></div>';
+      html += '<div class="tank-gal" style="color:#bbb;">Sin lectura</div></div>';
       return;
     }
     var pct = tank.pct || 0;
@@ -231,12 +232,12 @@ function renderTanks(varillas) {
     var fillClass = 'tank-fill ' + t.tipo + (isLow ? ' low' : '');
     html += '<div class="tank-item">';
     html += '<div class="tank-label ' + t.tipo + '">' + t.label + '</div>';
+    html += '<div class="tank-cap">~' + (Math.round(tank.cap/1000)*1000 || Math.round(tank.cap/100)*100) + ' gal</div>';
     html += '<div class="tank-wrap"><div class="tank-body">';
     html += '<div class="' + fillClass + '" style="height:' + pct + '%"></div>';
     html += '<div class="tank-pct">' + pct + '%</div>';
     html += '</div></div>';
     html += '<div class="tank-gal">' + tank.galones.toFixed(0) + ' gal</div>';
-    html += '<div class="tank-cap">de ' + tank.cap.toFixed(0) + ' gal</div>';
     if (isLow) html += '<div class="tank-alert">⚠️ Nivel bajo</div>';
     html += '</div>';
   });
