@@ -528,14 +528,17 @@ function render(data, fecha) {
     html += gastosHtml;
   }
 
-  // Tendencias historicas
-  if (_histCache) {
-    html += renderTendencias(_histCache);
-  }
-
-  // Tanks at the end
+  // Tanks
   if (data.varillas) {
     html += renderTanks(data.varillas);
+  }
+
+  // Tendencias historicas - at the very end
+  if (_histCache && _histCache.dias) {
+    console.log('Hist dias:', _histCache.dias.length);
+    html += renderTendencias(_histCache);
+  } else {
+    console.log('No histCache or no dias', _histCache);
   }
 
   html += `<div class="footer">Actualizado autom&aacute;ticamente &bull; Grifo</div>`;
