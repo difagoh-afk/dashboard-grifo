@@ -11,9 +11,9 @@
   --bg:      #f0f4f8;
   --card:    #ffffff;
   --border:  #e2e8f0;
-  --diesel:  #2563a8;
+  --diesel:  #1a1a2e;
   --regular: #16a34a;
-  --premium: #b45309;
+  --premium: #2563a8;
   --ok:      #16a34a;
   --fail:    #dc2626;
   --warn:    #d97706;
@@ -129,9 +129,9 @@ body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:
   border-radius:0 0 6px 6px;
   transition:height .8s ease;
 }
-.tank-fill.diesel  { background:linear-gradient(180deg,#60a5fa,#2563a8); }
+.tank-fill.diesel  { background:linear-gradient(180deg,#6b7280,#1a1a2e); }
 .tank-fill.regular { background:linear-gradient(180deg,#4ade80,#16a34a); }
-.tank-fill.premium { background:linear-gradient(180deg,#fbbf24,#b45309); }
+.tank-fill.premium { background:linear-gradient(180deg,#60a5fa,#2563a8); }
 .tank-fill.low     { background:linear-gradient(180deg,#fca5a5,#dc2626) !important; }
 .tank-pct {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -282,72 +282,81 @@ function renderTanks(varillas) {
 
 function renderTendencias(hist) {
   if (!hist || !hist.dias || hist.dias.length < 1) return '';
-  
   var dias = hist.dias;
   var mes  = hist.mes;
-  
-  // Format fecha for labels
+
   function fmtFecha(f) {
     var p = f.split('-');
-    var meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-    return p[2] + '/' + meses[parseInt(p[1])];
+    var m = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return p[2] + '/' + m[parseInt(p[1])];
   }
-  
-  // Bar chart - venta total por dia
-  var maxVenta = Math.max.apply(null, dias.map(function(d){return d.ventaTotal||0;})) || 1;
-  
-  var ventaBars = '';
-  dias.forEach(function(d) {
-    var h = Math.round((d.ventaTotal/maxVenta)*130);
-    ventaBars += '<div class="chart-bar-group">';
-    ventaBars += '<div class="chart-val" style="font-size:8px;">' + (d.ventaTotal > 0 ? ('S/'+Math.round(d.ventaTotal/1000)+'k') : '') + '</div>';
-    ventaBars += '<div class="chart-bar" style="height:' + h + 'px;background:var(--diesel);" title="' + fmtFecha(d.fecha) + ': S/ ' + d.ventaTotal.toFixed(0) + '"></div>';
-    ventaBars += '<div class="chart-label">' + fmtFecha(d.fecha) + '</div>';
-    ventaBars += '</div>';
-  });
-
-  // Galones por combustible
-  var maxGal = Math.max.apply(null, dias.map(function(d){
-    return Math.max(d.galDiesel||0, d.galRegular||0, d.galPremium||0);
-  })) || 1;
-
-  var galBars = '';
-  dias.forEach(function(d) {
-    var hD = Math.round(((d.galDiesel||0)/maxGal)*120);
-    var hR = Math.round(((d.galRegular||0)/maxGal)*120);
-    var hP = Math.round(((d.galPremium||0)/maxGal)*120);
-    galBars += '<div class="chart-bar-group">';
-    galBars += '<div style="display:flex;gap:2px;align-items:flex-end;height:130px;width:100%;">';
-    galBars += '<div style="width:33%;height:'+hD+'px;background:var(--diesel);border-radius:3px 3px 0 0;min-height:2px;" title="Diesel: '+d.galDiesel.toFixed(0)+' gal"></div>';
-    galBars += '<div style="width:33%;height:'+hR+'px;background:var(--regular);border-radius:3px 3px 0 0;min-height:2px;" title="Regular: '+d.galRegular.toFixed(0)+' gal"></div>';
-    galBars += '<div style="width:33%;height:'+hP+'px;background:var(--premium);border-radius:3px 3px 0 0;min-height:2px;" title="Premium: '+d.galPremium.toFixed(0)+' gal"></div>';
-    galBars += '</div>';
-    galBars += '<div class="chart-label">' + fmtFecha(d.fecha) + '</div>';
-    galBars += '</div>';
-  });
 
   var html = '';
-  
+
   // Resumen del mes
-  html += '<div class="card">';
-  html += '<div class="card-header">Resumen del mes</div>';
+  html += '<div class="card"><div class="card-header">Resumen del mes</div>';
   html += '<div class="card-body"><div class="mes-grid">';
   html += '<div class="mes-stat"><div class="ms-val">' + fmt(mes.total) + '</div><div class="ms-lbl">Venta total</div></div>';
   html += '<div class="mes-stat"><div class="ms-val">' + mes.dias + '</div><div class="ms-lbl">D&iacute;as operados</div></div>';
   html += '<div class="mes-stat"><div class="ms-val" style="color:#7c3aed;">' + fmt(mes.creditos) + '</div><div class="ms-lbl">Cr&eacute;ditos dados</div></div>';
   html += '</div></div></div>';
 
-  // Venta por dia
-  html += '<div class="card">';
-  html += '<div class="card-header">Venta diaria &mdash; &uacute;ltimos ' + dias.length + ' d&iacute;as</div>';
-  html += '<div class="card-body"><div class="chart-bars">' + ventaBars + '</div></div>';
-  html += '</div>';
+  // Cobros por dia: dinero real vs creditos
+  var maxV = Math.max.apply(null, dias.map(function(d){ return d.ventaTotal||0; })) || 1;
+
+  var ventaBars = '';
+  dias.forEach(function(d) {
+    var dinero   = (d.ventaTotal||0) - (d.creditos||0);
+    var creditos = d.creditos || 0;
+    var hD = Math.round((dinero/maxV)*130);
+    var hC = Math.round((creditos/maxV)*130);
+    ventaBars += '<div class="chart-bar-group" style="margin:0 2px;">';
+    ventaBars += '<div class="chart-val" style="font-size:8px;">' + (d.ventaTotal > 0 ? 'S/'+Math.round(d.ventaTotal/1000)+'k' : '') + '</div>';
+    ventaBars += '<div style="display:flex;gap:2px;align-items:flex-end;width:100%;">';
+    ventaBars += '<div style="flex:1;height:'+hD+'px;background:#374151;border-radius:3px 3px 0 0;min-height:1px;" title="Dinero: S/ '+dinero.toFixed(0)+'"></div>';
+    ventaBars += '<div style="flex:1;height:'+hC+'px;background:#7c3aed;border-radius:3px 3px 0 0;min-height:1px;" title="Credito: S/ '+creditos.toFixed(0)+'"></div>';
+    ventaBars += '</div>';
+    ventaBars += '<div class="chart-label">' + fmtFecha(d.fecha) + '</div>';
+    ventaBars += '</div>';
+  });
+
+  html += '<div class="card"><div class="card-header">Cobros por d&iacute;a</div><div class="card-body">';
+  html += '<div class="chart-bars">' + ventaBars + '</div>';
+  html += '<div class="chart-legend" style="margin-top:8px;">';
+  html += '<div class="legend-item"><div class="legend-dot" style="background:#374151"></div>Dinero recibido</div>';
+  html += '<div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>Cr&eacute;ditos</div>';
+  html += '</div></div></div>';
 
   // Galones por dia
-  html += '<div class="card">';
-  html += '<div class="card-header">Galones despachados por d&iacute;a</div>';
-  html += '<div class="card-body">';
-  html += '<div class="chart-bars">' + galBars + '</div>';
+  var maxG = Math.max.apply(null, dias.map(function(d){
+    return Math.max(d.galDiesel||0, d.galRegular||0, d.galPremium||0);
+  })) || 1;
+
+  var galBars = '';
+  dias.forEach(function(d) {
+    var hD = Math.round(((d.galDiesel||0)/maxG)*120);
+    var hR = Math.round(((d.galRegular||0)/maxG)*120);
+    var hP = Math.round(((d.galPremium||0)/maxG)*120);
+    galBars += '<div class="chart-bar-group" style="margin:0 4px;">';
+    galBars += '<div style="display:flex;gap:3px;align-items:flex-end;height:120px;width:100%;">';
+    galBars += '<div style="flex:1;height:'+hD+'px;background:var(--diesel);border-radius:3px 3px 0 0;min-height:2px;" title="Diesel: '+((d.galDiesel||0).toFixed(0))+' gal"></div>';
+    galBars += '<div style="flex:1;height:'+hR+'px;background:var(--regular);border-radius:3px 3px 0 0;min-height:2px;" title="Regular: '+((d.galRegular||0).toFixed(0))+' gal"></div>';
+    galBars += '<div style="flex:1;height:'+hP+'px;background:var(--premium);border-radius:3px 3px 0 0;min-height:2px;" title="Premium: '+((d.galPremium||0).toFixed(0))+' gal"></div>';
+    galBars += '</div>';
+    galBars += '<div class="chart-label">' + fmtFecha(d.fecha) + '</div>';
+    galBars += '</div>';
+  });
+
+  html += '<div class="card"><div class="card-header">Galones despachados por d&iacute;a</div><div class="card-body">';
+  html += '<div style="display:flex;gap:6px;">';
+  var maxGR = Math.round(maxG/100)*100 || 100;
+  html += '<div style="display:flex;flex-direction:column;justify-content:space-between;padding-bottom:22px;width:32px;text-align:right;">';
+  html += '<div style="font-size:9px;color:#aaa;">' + maxGR + '</div>';
+  html += '<div style="font-size:9px;color:#aaa;">' + Math.round(maxGR*0.5) + '</div>';
+  html += '<div style="font-size:9px;color:#aaa;">0</div>';
+  html += '</div>';
+  html += '<div style="flex:1;"><div class="chart-bars">' + galBars + '</div></div>';
+  html += '</div>';
   html += '<div class="chart-legend">';
   html += '<div class="legend-item"><div class="legend-dot" style="background:var(--diesel)"></div>Diesel</div>';
   html += '<div class="legend-item"><div class="legend-dot" style="background:var(--regular)"></div>Regular</div>';
@@ -356,6 +365,7 @@ function renderTendencias(hist) {
 
   return html;
 }
+
 
 function toTitleCase(str) {
   if (!str) return '';
