@@ -180,7 +180,7 @@ body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbyLJhYiFLxtAhPcHBBGnFLSjU_d-3krvCsykHliO4L1LiJUTW_4qkzCskMjR8-7hHQo4g/exec";
+const API = "https://script.google.com/macros/s/AKfycbxlNHV4j5j_7O0wn4jdQsHpycRhBNcbiChRtSCGcPP2LcBKzgAXyojw5mseH2I0EP5EWA/exec";
 
 function getToday() {
   const now  = new Date();
@@ -251,7 +251,7 @@ function renderTanks(varillas) {
     {key:'premium', label:'PREMIUM',  tipo:'premium'},
     {key:'diesel2', label:'DIESEL', tipo:'diesel'},
   ];
-  var html = '<div class="card"><div class="card-header">Inventario de tanques (varilla)</div><div class="card-body"><div class="tanks-grid">';
+
   tanks.forEach(function(t) {
     var tank = varillas[t.key];
     if (!tank || tank.galones === null) {
@@ -310,11 +310,20 @@ function renderTendencias(hist) {
     var creditos = d.creditos || 0;
     var hD = Math.round((dinero/maxV)*130);
     var hC = Math.round((creditos/maxV)*130);
+    var dLabel = dinero > 0 ? 'S/'+Math.round(dinero/1000)+'k' : '';
+    var cLabel = creditos > 0 ? 'S/'+Math.round(creditos/1000)+'k' : '';
     ventaBars += '<div class="chart-bar-group" style="margin:0 2px;">';
-    ventaBars += '<div class="chart-val" style="font-size:8px;">' + (d.ventaTotal > 0 ? 'S/'+Math.round(d.ventaTotal/1000)+'k' : '') + '</div>';
-    ventaBars += '<div style="display:flex;gap:2px;align-items:flex-end;width:100%;">';
-    ventaBars += '<div style="flex:1;height:'+hD+'px;background:#374151;border-radius:3px 3px 0 0;min-height:1px;" title="Dinero: S/ '+dinero.toFixed(0)+'"></div>';
-    ventaBars += '<div style="flex:1;height:'+hC+'px;background:#7c3aed;border-radius:3px 3px 0 0;min-height:1px;" title="Credito: S/ '+creditos.toFixed(0)+'"></div>';
+    ventaBars += '<div style="display:flex;gap:4px;align-items:flex-end;width:100%;">';
+    // Dinero bar with label on top
+    ventaBars += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">';
+    ventaBars += '<div style="font-size:8px;font-weight:700;color:#0891b2;">' + dLabel + '</div>';
+    ventaBars += '<div style="width:100%;height:'+hD+'px;background:#0891b2;border-radius:3px 3px 0 0;min-height:1px;" title="Dinero: S/ '+dinero.toFixed(0)+'"></div>';
+    ventaBars += '</div>';
+    // Credito bar with label on top
+    ventaBars += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">';
+    ventaBars += '<div style="font-size:8px;font-weight:700;color:#7c3aed;">' + cLabel + '</div>';
+    ventaBars += '<div style="width:100%;height:'+hC+'px;background:#7c3aed;border-radius:3px 3px 0 0;min-height:1px;" title="Credito: S/ '+creditos.toFixed(0)+'"></div>';
+    ventaBars += '</div>';
     ventaBars += '</div>';
     ventaBars += '<div class="chart-label">' + fmtFecha(d.fecha) + '</div>';
     ventaBars += '</div>';
@@ -323,7 +332,7 @@ function renderTendencias(hist) {
   html += '<div class="card"><div class="card-header">Cobros por d&iacute;a</div><div class="card-body">';
   html += '<div class="chart-bars">' + ventaBars + '</div>';
   html += '<div class="chart-legend" style="margin-top:8px;">';
-  html += '<div class="legend-item"><div class="legend-dot" style="background:#374151"></div>Dinero recibido</div>';
+  html += '<div class="legend-item"><div class="legend-dot" style="background:#0891b2"></div>Dinero recibido</div>';
   html += '<div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>Cr&eacute;ditos</div>';
   html += '</div></div></div>';
 
@@ -373,6 +382,7 @@ function toTitleCase(str) {
 }
 
 function render(data, fecha) {
+  window._currentDashData = data;
   if (!data.tieneDatos) {
     document.getElementById('main').innerHTML = '<div class="state-msg"><div class="icon">&#128233;</div><div>Sin reportes para esta fecha.</div></div>';
     return;
@@ -540,7 +550,7 @@ function render(data, fecha) {
 
   // Tanks
   if (data.varillas) {
-    html += renderTanks(data.varillas);
+    html += renderTanks(data.varillas, data.varillasPorTurno);
   }
 
   // Tendencias historicas - at the very end
