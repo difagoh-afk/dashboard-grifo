@@ -243,15 +243,15 @@ function loadData() {
   document.body.appendChild(s2);
 }
 
-function renderTanks(varillas) {
-  if (!varillas) return '';
+function renderTankGrid(varillas) {
+  if (!varillas) return '<div style="font-size:12px;color:var(--gray);padding:8px;">Sin lecturas para este turno.</div>';
   var tanks = [
     {key:'diesel1', label:'DIESEL', tipo:'diesel'},
-    {key:'regular', label:'REGULAR',  tipo:'regular'},
-    {key:'premium', label:'PREMIUM',  tipo:'premium'},
+    {key:'regular', label:'REGULAR', tipo:'regular'},
+    {key:'premium', label:'PREMIUM', tipo:'premium'},
     {key:'diesel2', label:'DIESEL', tipo:'diesel'},
   ];
-
+  var html = '';
   tanks.forEach(function(t) {
     var tank = varillas[t.key];
     if (!tank || tank.galones === null) {
@@ -272,11 +272,40 @@ function renderTanks(varillas) {
     html += '<div class="tank-pct">' + pct + '%</div>';
     html += '</div></div>';
     html += '<div class="tank-gal">' + tank.galones.toFixed(0) + ' gal</div>';
-    if (isLow) html += '<div class="tank-alert">⚠️ Nivel bajo</div>';
+    if (isLow) html += '<div class="tank-alert">&#9888;&#65039; Nivel bajo</div>';
     html += '</div>';
   });
+  return html;
+}
+
+function renderTanks(varillas, varillasPorTurno) {
+  var hasNoche = varillasPorTurno && varillasPorTurno['Noche'];
+  var hasDia   = varillasPorTurno && varillasPorTurno['Dia'];
+  var defaultTurno = hasNoche ? 'Noche' : 'Dia';
+  var defaultV = hasNoche ? varillasPorTurno['Noche'] : (hasDia ? varillasPorTurno['Dia'] : varillas);
+
+  var html = '<div class="card">';
+  html += '<div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">';
+  html += 'Inventario de tanques (varilla)';
+  html += '<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;">';
+  html += '<button onclick="switchTurnoVarilla(this,'Dia')" id="btn-varilla-dia" style="padding:3px 10px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:' + (defaultTurno==='Dia'?'var(--ink)':'#fff') + ';color:' + (defaultTurno==='Dia'?'#fff':'#aaa') + ';">Dia</button>';
+  html += '<button onclick="switchTurnoVarilla(this,'Noche')" id="btn-varilla-noche" style="padding:3px 10px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:' + (defaultTurno==='Noche'?'var(--ink)':'#fff') + ';color:' + (defaultTurno==='Noche'?'#fff':'#aaa') + ';">Noche</button>';
+  html += '</div></div>';
+  html += '<div class="card-body"><div class="tanks-grid" id="tanks-grid-content">';
+  html += renderTankGrid(defaultV);
   html += '</div></div></div>';
   return html;
+}
+
+function switchTurnoVarilla(btn, turno) {
+  document.getElementById('btn-varilla-dia').style.background   = turno==='Dia'   ? 'var(--ink)' : '#fff';
+  document.getElementById('btn-varilla-dia').style.color        = turno==='Dia'   ? '#fff' : '#aaa';
+  document.getElementById('btn-varilla-noche').style.background = turno==='Noche' ? 'var(--ink)' : '#fff';
+  document.getElementById('btn-varilla-noche').style.color      = turno==='Noche' ? '#fff' : '#aaa';
+  if (window._currentDashData && window._currentDashData.varillasPorTurno) {
+    var v = window._currentDashData.varillasPorTurno[turno];
+    document.getElementById('tanks-grid-content').innerHTML = renderTankGrid(v || null);
+  }
 }
 
 
