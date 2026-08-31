@@ -140,6 +140,22 @@ body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:
 .tank-gal { font-size:12px; font-family:var(--mono); font-weight:600; text-align:center; color:var(--gray); }
 .tank-cap { font-size:10px; color:#bbb; text-align:center; }
 .tank-alert { font-size:10px; color:var(--fail); font-weight:700; text-align:center; }
+
+/* ── Charts ── */
+.chart-wrap { position:relative; height:180px; margin:4px 0; }
+.chart-bars { display:flex; align-items:flex-end; gap:4px; height:150px; padding:0 4px; }
+.chart-bar-group { display:flex; flex-direction:column; align-items:center; flex:1; gap:2px; }
+.chart-bar { width:100%; border-radius:3px 3px 0 0; transition:height .4s ease; min-height:2px; cursor:pointer; }
+.chart-bar:hover { opacity:.8; }
+.chart-label { font-size:9px; color:var(--gray); text-align:center; margin-top:3px; white-space:nowrap; }
+.chart-val { font-size:9px; font-weight:700; color:var(--ink); text-align:center; }
+.chart-legend { display:flex; gap:12px; justify-content:center; margin-top:8px; flex-wrap:wrap; }
+.legend-item { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--gray); }
+.legend-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+.mes-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.mes-stat { text-align:center; background:#f8fafc; border-radius:8px; padding:12px 8px; border:1px solid var(--border); }
+.mes-stat .ms-val { font-size:18px; font-weight:800; font-family:var(--mono); color:var(--ink); }
+.mes-stat .ms-lbl { font-size:10px; color:var(--gray); margin-top:3px; letter-spacing:.04em; text-transform:uppercase; }
 </style>
 </head>
 <body>
@@ -164,7 +180,7 @@ body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbw71x_kHxIoDGqckHTZkhurdFPQ02xb6zCHwuD_YWG-_ggcMdCkp7fDrs3HZCxdhLLvTQ/exec";
+const API = "https://script.google.com/macros/s/AKfycbw8Te8mCxANvIi5bZREf5C5nlCBRsKlAtEuZfO95WF6vRpPSR5vSqy3jhkVomCMEwj1cQ/exec";
 
 function getToday() {
   const now  = new Date();
@@ -242,6 +258,84 @@ function renderTanks(varillas) {
     html += '</div>';
   });
   html += '</div></div></div>';
+  return html;
+}
+
+
+function renderTendencias(hist) {
+  if (!hist || !hist.dias || hist.dias.length < 2) return '';
+  
+  var dias = hist.dias;
+  var mes  = hist.mes;
+  
+  // Format fecha for labels
+  function fmtFecha(f) {
+    var p = f.split('-');
+    var meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return p[2] + '/' + meses[parseInt(p[1])];
+  }
+  
+  // Bar chart - venta total por dia
+  var maxVenta = Math.max.apply(null, dias.map(function(d){return d.ventaTotal||0;})) || 1;
+  
+  var ventaBars = '';
+  dias.forEach(function(d) {
+    var h = Math.round((d.ventaTotal/maxVenta)*130);
+    ventaBars += '<div class="chart-bar-group">';
+    ventaBars += '<div class="chart-val" style="font-size:8px;">' + (d.ventaTotal > 0 ? ('S/'+Math.round(d.ventaTotal/1000)+'k') : '') + '</div>';
+    ventaBars += '<div class="chart-bar" style="height:' + h + 'px;background:var(--diesel);" title="' + fmtFecha(d.fecha) + ': S/ ' + d.ventaTotal.toFixed(0) + '"></div>';
+    ventaBars += '<div class="chart-label">' + fmtFecha(d.fecha) + '</div>';
+    ventaBars += '</div>';
+  });
+
+  // Galones por combustible
+  var maxGal = Math.max.apply(null, dias.map(function(d){
+    return Math.max(d.galDiesel||0, d.galRegular||0, d.galPremium||0);
+  })) || 1;
+
+  var galBars = '';
+  dias.forEach(function(d) {
+    var hD = Math.round(((d.galDiesel||0)/maxGal)*120);
+    var hR = Math.round(((d.galRegular||0)/maxGal)*120);
+    var hP = Math.round(((d.galPremium||0)/maxGal)*120);
+    galBars += '<div class="chart-bar-group">';
+    galBars += '<div style="display:flex;gap:2px;align-items:flex-end;height:120px;">';
+    galBars += '<div class="chart-bar" style="height:'+hD+'px;background:var(--diesel);flex:1;" title="Diesel: '+d.galDiesel.toFixed(0)+' gal"></div>';
+    galBars += '<div class="chart-bar" style="height:'+hR+'px;background:var(--regular);flex:1;" title="Regular: '+d.galRegular.toFixed(0)+' gal"></div>';
+    galBars += '<div class="chart-bar" style="height:'+hP+'px;background:var(--premium);flex:1;" title="Premium: '+d.galPremium.toFixed(0)+' gal"></div>';
+    galBars += '</div>';
+    galBars += '<div class="chart-label">' + fmtFecha(d.fecha) + '</div>';
+    galBars += '</div>';
+  });
+
+  var html = '';
+  
+  // Resumen del mes
+  html += '<div class="card">';
+  html += '<div class="card-header">Resumen del mes</div>';
+  html += '<div class="card-body"><div class="mes-grid">';
+  html += '<div class="mes-stat"><div class="ms-val">' + fmt(mes.total) + '</div><div class="ms-lbl">Venta total</div></div>';
+  html += '<div class="mes-stat"><div class="ms-val">' + mes.dias + '</div><div class="ms-lbl">D&iacute;as operados</div></div>';
+  html += '<div class="mes-stat"><div class="ms-val" style="color:#7c3aed;">' + fmt(mes.creditos) + '</div><div class="ms-lbl">Cr&eacute;ditos dados</div></div>';
+  html += '</div></div></div>';
+
+  // Venta por dia
+  html += '<div class="card">';
+  html += '<div class="card-header">Venta diaria &mdash; &uacute;ltimos ' + dias.length + ' d&iacute;as</div>';
+  html += '<div class="card-body"><div class="chart-bars">' + ventaBars + '</div></div>';
+  html += '</div>';
+
+  // Galones por dia
+  html += '<div class="card">';
+  html += '<div class="card-header">Galones despachados por d&iacute;a</div>';
+  html += '<div class="card-body">';
+  html += '<div class="chart-bars">' + galBars + '</div>';
+  html += '<div class="chart-legend">';
+  html += '<div class="legend-item"><div class="legend-dot" style="background:var(--diesel)"></div>Diesel</div>';
+  html += '<div class="legend-item"><div class="legend-dot" style="background:var(--regular)"></div>Regular</div>';
+  html += '<div class="legend-item"><div class="legend-dot" style="background:var(--premium)"></div>Premium</div>';
+  html += '</div></div></div>';
+
   return html;
 }
 
@@ -414,6 +508,11 @@ function render(data, fecha) {
     }
     gastosHtml += '</div></div>';
     html += gastosHtml;
+  }
+
+  // Tendencias historicas
+  if (_histCache) {
+    html += renderTendencias(_histCache);
   }
 
   // Tanks at the end
