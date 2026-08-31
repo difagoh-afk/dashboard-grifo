@@ -284,18 +284,25 @@ function renderTanks(varillas, varillasPorTurno) {
   var defaultTurno = hasNoche ? 'Noche' : 'Dia';
   var defaultV = hasNoche ? varillasPorTurno['Noche'] : (hasDia ? varillasPorTurno['Dia'] : varillas);
 
+  var inkStyle   = 'background:var(--ink);color:#fff;';
+  var plainStyle = 'background:#fff;color:#aaa;';
+  var btnBase    = 'padding:3px 10px;font-size:11px;font-weight:600;border:none;cursor:pointer;';
+  var diaStyle   = btnBase + (defaultTurno==='Dia' ? inkStyle : plainStyle);
+  var nocheStyle = btnBase + (defaultTurno==='Noche' ? inkStyle : plainStyle);
+
   var html = '<div class="card">';
   html += '<div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">';
   html += 'Inventario de tanques (varilla)';
-  html += '<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;">';
-  html += '<button onclick="switchTurnoVarilla(this,'Dia')" id="btn-varilla-dia" style="padding:3px 10px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:' + (defaultTurno==='Dia'?'var(--ink)':'#fff') + ';color:' + (defaultTurno==='Dia'?'#fff':'#aaa') + ';">Dia</button>';
-  html += '<button onclick="switchTurnoVarilla(this,'Noche')" id="btn-varilla-noche" style="padding:3px 10px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:' + (defaultTurno==='Noche'?'var(--ink)':'#fff') + ';color:' + (defaultTurno==='Noche'?'#fff':'#aaa') + ';">Noche</button>';
+  html += '<div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;">';
+  html += '<button id="btn-varilla-dia" style="' + diaStyle + '" onclick="switchTurnoVarilla(this, String.fromCharCode(68,105,97))">Dia</button>';
+  html += '<button id="btn-varilla-noche" style="' + nocheStyle + '" onclick="switchTurnoVarilla(this, String.fromCharCode(78,111,99,104,101))">Noche</button>';
   html += '</div></div>';
   html += '<div class="card-body"><div class="tanks-grid" id="tanks-grid-content">';
   html += renderTankGrid(defaultV);
   html += '</div></div></div>';
   return html;
 }
+
 
 function switchTurnoVarilla(btn, turno) {
   document.getElementById('btn-varilla-dia').style.background   = turno==='Dia'   ? 'var(--ink)' : '#fff';
