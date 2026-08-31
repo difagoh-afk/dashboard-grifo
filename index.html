@@ -203,26 +203,44 @@ function fmt(n) {
 function fmtGal(n) { return (parseFloat(n)||0).toFixed(3); }
 function pct(a, b) { return b ? Math.round((a/b)*100) : 0; }
 
+var _histCache = null;
+
 function loadData() {
   const fecha = document.getElementById('fecha-input').value;
   document.getElementById('main').innerHTML = '<div class="state-msg"><div class="icon">&#9203;</div><div>Cargando...</div></div>';
 
-  // Remove previous JSONP script if exists
-  const old = document.getElementById('jsonp-script');
-  if (old) old.remove();
+  // Remove previous JSONP scripts
+  ['jsonp-daily','jsonp-hist'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.remove();
+  });
 
-  // JSONP callback
-  window._dashboardCallback = function(data) {
-    render(data, fecha);
+  var dailyData = null;
+  var dailyDone = false;
+  var histDone  = _histCache !== null;
+
+  function tryRender() {
+    if (dailyDone && histDone) render(dailyData, fecha);
+  }
+
+  // Daily data
+  window._dailyCallback = function(data) {
+    dailyData = data; dailyDone = true; tryRender();
   };
-
-  const script = document.createElement('script');
-  script.id = 'jsonp-script';
-  script.src = API + '?fecha=' + fecha + '&callback=_dashboardCallback';
-  script.onerror = () => {
+  var s1 = document.createElement('script'); s1.id = 'jsonp-daily';
+  s1.src = API + '?fecha=' + fecha + '&callback=_dailyCallback';
+  s1.onerror = function() {
     document.getElementById('main').innerHTML = '<div class="state-msg"><div class="icon">&#10060;</div><div>Error al cargar datos.</div></div>';
   };
-  document.body.appendChild(script);
+  document.body.appendChild(s1);
+
+  // Historico (cached after first load)
+  if (_histCache) { tryRender(); return; }
+  window._histCallback = function(data) {
+    _histCache = data; histDone = true; tryRender();
+  };
+  var s2 = document.createElement('script'); s2.id = 'jsonp-hist';
+  s2.src = API + '?action=historico&dias=14&callback=_histCallback';
+  document.body.appendChild(s2);
 }
 
 function renderTanks(varillas) {
