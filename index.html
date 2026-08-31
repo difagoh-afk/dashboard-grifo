@@ -317,10 +317,10 @@ function renderTendencias(hist) {
     var hR = Math.round(((d.galRegular||0)/maxGal)*120);
     var hP = Math.round(((d.galPremium||0)/maxGal)*120);
     galBars += '<div class="chart-bar-group">';
-    galBars += '<div style="display:flex;gap:2px;align-items:flex-end;height:120px;">';
-    galBars += '<div class="chart-bar" style="height:'+hD+'px;background:var(--diesel);flex:1;" title="Diesel: '+d.galDiesel.toFixed(0)+' gal"></div>';
-    galBars += '<div class="chart-bar" style="height:'+hR+'px;background:var(--regular);flex:1;" title="Regular: '+d.galRegular.toFixed(0)+' gal"></div>';
-    galBars += '<div class="chart-bar" style="height:'+hP+'px;background:var(--premium);flex:1;" title="Premium: '+d.galPremium.toFixed(0)+' gal"></div>';
+    galBars += '<div style="display:flex;gap:2px;align-items:flex-end;height:130px;width:100%;">';
+    galBars += '<div style="width:33%;height:'+hD+'px;background:var(--diesel);border-radius:3px 3px 0 0;min-height:2px;" title="Diesel: '+d.galDiesel.toFixed(0)+' gal"></div>';
+    galBars += '<div style="width:33%;height:'+hR+'px;background:var(--regular);border-radius:3px 3px 0 0;min-height:2px;" title="Regular: '+d.galRegular.toFixed(0)+' gal"></div>';
+    galBars += '<div style="width:33%;height:'+hP+'px;background:var(--premium);border-radius:3px 3px 0 0;min-height:2px;" title="Premium: '+d.galPremium.toFixed(0)+' gal"></div>';
     galBars += '</div>';
     galBars += '<div class="chart-label">' + fmtFecha(d.fecha) + '</div>';
     galBars += '</div>';
